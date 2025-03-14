@@ -13,6 +13,8 @@ const config = {
 	},
 
 	extensions: ['.svelte', '.svx']
+
+	
 };
 
 export default config;

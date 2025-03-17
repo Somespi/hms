@@ -1,7 +1,13 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
-@plugin "daisyui";
+
 @plugin "daisyui" {
-    themes: false;
-  }
+  themes: dark --default, dark --prefersdar;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100..900&family=Outfit&display=swap');
+
+* {
+  font-family: 'Outfit', 'Noto Sans Arabic', sans-serif;
+}

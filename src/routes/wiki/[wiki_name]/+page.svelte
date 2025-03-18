@@ -15,8 +15,10 @@
 	let wikiName: string = page.params.wiki_name;
 	let language: string = 'en';
 
+	let isUsingBionicReading: boolean = $state(false);
+
 	let summary: string = $state('Generating...');
-	let wikiBody: string = $state('Generating...');
+	let wikiBody: string[] = $state([]);
 	let wikiSections: any = $state({});
 
 	async function getWikiSummary() {
@@ -35,7 +37,7 @@
 	async function getWikiBody() {
 		try {
 			const res = await axios.get(`http://9.141.41.77:8080/wiki/${language}/${wikiName}`);
-			wikiBody = res.data.summary;
+			wikiBody = [res.data.summary, res.data.bionic_summary.replaceAll('__', '**')];
 			wikiSections = res.data.sections;
 			console.log(wikiSections);
 		} catch (error) {
@@ -63,8 +65,15 @@
 		loadWikiDataAtOnce();
 	});
 </script>
+<div class="flex w-full flex-row justify-between">
+	<h1 class="py-6 text-3xl font-semibold">{wikiName}</h1>
+	<div class="flex flex-row gap-2 text-sm">
+		<span class="font-semibold">Bionic Reading</span>
+		<!-- svelte-ignore a11y_label_has_associated_control -->
+		<input type="checkbox" onchange={() => (isUsingBionicReading = !isUsingBionicReading)} checked={isUsingBionicReading} class="toggle" />
 
-<h1 class="py-6 text-3xl font-semibold">{wikiName}</h1>
+	</div>
+</div>
 <div class="inline-block w-auto">
 	<div class="bg-base-300 flex space-x-1 rounded-md p-1">
 		<TabButton name="details" label="Details" onClick={setActiveTab} bind:activeTab />
@@ -126,15 +135,19 @@
 		</div>
 
 		<div class="space-y-4 font-light" id="wiki_body">
-			{@html marked(wikiBody)}
-			<br><br><br>
+			{@html marked(wikiBody[isUsingBionicReading ? 1 : 0] ?? '')}
+			<br /><br /><br />
 			{#each Object.keys(wikiSections) as section}
 				<details open>
 					<summary class="text-2xl font-bold">{section}</summary>
 
 					<p>
 						{@html marked(
-							(wikiSections[section]?.body ?? '').replace(new RegExp(`^###\\s*${section}\\s*`), '')
+							(
+								(isUsingBionicReading
+									? wikiSections[section]?.body_bionic.replaceAll('__', '**') ?? ''
+									: wikiSections[section]?.body ?? '') 
+							).replace(new RegExp(`^###\\s*${section}\\s*`), '')
 						)}
 					</p>
 				</details>

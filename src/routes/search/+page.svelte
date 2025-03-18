@@ -25,7 +25,7 @@
 
 		try {
 			const res = await fetch(
-				`http://9.141.41.77:8080/search?q=${encodeURIComponent(query)}&lang=ar`,
+				`http://9.141.41.77:8080/search?q=${encodeURIComponent(query)}&lang=en`,
 				{
 					headers: {
 						Accept: 'application/json',
@@ -88,7 +88,7 @@
 		{#if results.length > 0}
 			<div class="mt-1 w-full max-w-xl rounded-lg bg-gray-700 shadow-md flex flex-col gap-2">
 				{#each results as result}
-					<a class="border-b border-gray-600 p-4 last:border-none" href={result.url}>
+					<a class="border-b border-gray-600 p-4 last:border-none" href="/wiki/{result.title}?lang=en">
 						<h2 class="text-lg font-bold text-white">{result.title}</h2>
 						<p class="text-sm text-gray-400">{result.summary.slice(0, 100)}...
 

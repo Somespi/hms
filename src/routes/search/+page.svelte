@@ -1,24 +1,14 @@
-<script>
-	// @ts-ignore
-	// @ts-ignore
+<script lang='ts'>
 	import { onMount } from 'svelte';
 	let query = '';
-	// @ts-ignore
-	/**
-	 * @type {string | any[]}
-	 */
-	let results = [];
+	let results: { title: string; url: string; summary: string }[] = [];
 	let loading = false;
 	let error = '';
-	// @ts-ignore
-	let timeout = null; // Store timeout ID
+	let timeout: string | number | NodeJS.Timeout | null | undefined = null; // Store timeout ID
 
 	function handleInput() {
 		// Clear the previous timeout if it exists
-		// @ts-ignore
 		if (timeout) clearTimeout(timeout);
-
-		// Set a new timeout for 1 second (1000ms)
 		timeout = setTimeout(() => {
 			search();
 		}, 1000);
@@ -50,8 +40,7 @@
 
 			results = await res.json();
 			console.log(results);
-		} catch (err) {
-			// @ts-ignore
+		} catch (err: Error | any) {
 			error = err.message;
 		} finally {
 			loading = false;
@@ -101,7 +90,7 @@
 				{#each results as result}
 					<a class="border-b border-gray-600 p-4 last:border-none" href={result.url}>
 						<h2 class="text-lg font-bold text-white">{result.title}</h2>
-						<p class="text-sm text-gray-400">{result.summary.substr(0, 100)}...
+						<p class="text-sm text-gray-400">{result.summary.slice(0, 100)}...
 
                         </p>
 					</a>

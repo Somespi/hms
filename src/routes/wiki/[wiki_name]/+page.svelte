@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import TabButton from '$lib/TabButton.svelte';
-	import axios from 'axios';
+	import axios, { AxiosError } from 'axios';
 	import { onMount } from 'svelte';
 	import { marked } from 'marked';
 
@@ -20,15 +20,68 @@
 	let summary: string = $state('Generating...');
 	let wikiBody: string[] = $state([]);
 	let wikiSections: any = $state({});
+	let infoBoxImage: string = $state('');
+	let infoBoxContent: string = $state('');
+
+	async function getInfoBox() {
+		try {
+			const res = await axios.post(`https://wikiless.serveo.net/infobox`, {
+				lang: language,
+				wiki: wikiName
+			});
+			console.log(res.data);
+			infoBoxImage = res.data.images[Object.keys(res.data.images)[0]];
+			const firstKey = Object.keys(res.data.infobox)[0];
+			let firstObject = res.data.infobox[firstKey];
+			if (Object.keys(res.data.infobox).length > 4) {
+				firstObject = res.data.infobox;
+			}
+			console.log(firstObject, res.data);
+			let markedDown = '';
+
+			Object.keys(firstObject).forEach((value) => {
+				if (firstObject[value] && value !== 'imageGallery') {
+					const currentValue = firstObject[value];
+					markedDown += `\n**${value}**: `;
+
+					if (
+						typeof currentValue === 'string' &&
+						new RegExp(`(jpg|jpeg|png|gif|bmp|webp|svg)`).test(currentValue)
+					) {
+						markedDown += ` ![${value}](${currentValue})\n `;
+						console.warn(markedDown);
+					} else if (Array.isArray(currentValue)) {
+						markedDown += '\n';
+						markedDown +=
+							currentValue.map((item) => `\t- ${cleanUpAndTitle(item)}`).join('\n') + '\n';
+					} else if (typeof currentValue === 'string') {
+						markedDown += `${cleanUpAndTitle(currentValue)}\n`;
+					} else if (typeof currentValue === 'object' && !Array.isArray(currentValue)) {
+						Object.keys(currentValue).forEach((objKey) => {
+							markedDown += `\n  - **${cleanUpAndTitle(objKey)}**: ${cleanUpAndTitle(currentValue[objKey])}`;
+						});
+						markedDown += '\n';
+					}
+				}
+				console.log(markedDown);
+				infoBoxContent = markedDown;
+			});
+		} catch (error: any) {
+			console.error('Error fetching info box:', error);
+			if (error.response.status === 500) {
+				getInfoBox();
+			}
+		}
+	}
 
 	async function getWikiSummary() {
 		try {
-			const res = await axios.post('http://9.141.41.77:8080/summary', {
+			const res = await axios.post('https://wikiless.serveo.net/summary', {
 				lang: language,
 				wiki: wikiName
 			});
 			summary = res.data.message;
-			console.log(summary);
+			//console.log(summary);
 		} catch (error) {
 			console.error('Error fetching summary:', error);
 		}
@@ -36,10 +89,10 @@
 
 	async function getWikiBody() {
 		try {
-			const res = await axios.get(`http://9.141.41.77:8080/wiki/${language}/${wikiName}`);
+			const res = await axios.get(`https://wikiless.serveo.net/wiki/${language}/${wikiName}`);
 			wikiBody = [res.data.summary, res.data.bionic_summary.replaceAll('__', '**')];
 			wikiSections = res.data.sections;
-			console.log(wikiSections);
+			//console.log(wikiSections);
 		} catch (error) {
 			console.error('Error fetching wiki body:', error);
 		}
@@ -47,7 +100,7 @@
 
 	async function loadWikiDataAtOnce() {
 		try {
-			await Promise.all([getWikiSummary(), getWikiBody()]);
+			await Promise.all([getWikiSummary(), getWikiBody(), getInfoBox()]);
 			console.log('Wiki data loaded successfully!');
 		} catch (error) {
 			console.error('Error loading wiki data:', error);
@@ -64,14 +117,32 @@
 
 		loadWikiDataAtOnce();
 	});
+
+	function cleanUpAndTitle(string: string) {
+		let text = string.replaceAll('_', ' ');
+		text = text.replaceAll('-', ' ');
+		if (new RegExp(`(A-Z)`).test(text)) {
+			const index = text.search(new RegExp(`(A-Z)`));
+			if (index > 0 && index < text.length - 1) {
+				text = text.slice(0, index) + ' ' + text.slice(index);
+			}
+		}
+		text = text.charAt(0).toUpperCase() + text.slice(1);
+		return text;
+	}
 </script>
+
 <div class="flex w-full flex-row justify-between">
 	<h1 class="py-6 text-3xl font-semibold">{wikiName}</h1>
 	<div class="flex flex-row gap-2 text-sm">
 		<span class="font-semibold">Bionic Reading</span>
 		<!-- svelte-ignore a11y_label_has_associated_control -->
-		<input type="checkbox" onchange={() => (isUsingBionicReading = !isUsingBionicReading)} checked={isUsingBionicReading} class="toggle" />
-
+		<input
+			type="checkbox"
+			onchange={() => (isUsingBionicReading = !isUsingBionicReading)}
+			checked={isUsingBionicReading}
+			class="toggle"
+		/>
 	</div>
 </div>
 <div class="inline-block w-auto">
@@ -95,40 +166,12 @@
 		<div class="ai-card">
 			<div class="card bg-base-100 border shadow-sm">
 				<figure class="px-10 pt-10">
-					<img
-						class="h-34 w-34"
-						src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Coat_of_arms_of_Egypt_%28Official%29.svg/113px-Coat_of_arms_of_Egypt_%28Official%29.svg.png"
-						alt="AI"
-					/>
+					<img class="h-34 w-34" src={infoBoxImage} alt={wikiName} />
 				</figure>
 				<div class="card-body items-center text-center">
-					<h2 class="card-title">Arab Republic of Egypt</h2>
-					<ul class="space-y-2 text-left font-light">
-						<li>
-							<strong>Anthem:</strong> Bilady, Bilady, Bilady ("My country, my country, my country")
-						</li>
-						<li><strong>Capital and Largest City:</strong> Cairo</li>
-						<li><strong>Official Language:</strong> Arabic</li>
-						<li><strong>National Language:</strong> Egyptian Arabic</li>
-						<li>
-							<strong>Government:</strong> Unitary semi-presidential republic (described by some as an
-							authoritarian dictatorship)
-						</li>
-						<li><strong>President:</strong> Abdel Fattah el-Sisi</li>
-						<li><strong>Prime Minister:</strong> Mostafa Madbouly</li>
-						<li><strong>Legislature:</strong> Parliament (Senate and House of Representatives)</li>
-						<li>
-							<strong>Historical Highlights:</strong>
-							<ul>
-								<li>Unification of Upper and Lower Egypt (c. 3150 BC)</li>
-								<li>Arab conquest (639–642)</li>
-								<li>Independence from the United Kingdom (1922)</li>
-								<li>Republic declared (1953)</li>
-							</ul>
-						</li>
-						<li><strong>Area:</strong> 1,010,408 km²</li>
-						<li><strong>Population:</strong> Approximately 107.3 million (2024 estimate)</li>
-						<li><strong>Currency:</strong> Egyptian pound (EGP)</li>
+					<h2 class="card-title">{wikiName}</h2>
+					<ul class="text-left opacity-95">
+						{@html marked(infoBoxContent)}
 					</ul>
 				</div>
 			</div>
@@ -143,10 +186,9 @@
 
 					<p>
 						{@html marked(
-							(
-								(isUsingBionicReading
-									? wikiSections[section]?.body_bionic.replaceAll('__', '**') ?? ''
-									: wikiSections[section]?.body ?? '') 
+							(isUsingBionicReading
+								? (wikiSections[section]?.body_bionic.replaceAll('__', '**') ?? '')
+								: (wikiSections[section]?.body ?? '')
 							).replace(new RegExp(`^###\\s*${section}\\s*`), '')
 						)}
 					</p>

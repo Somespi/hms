@@ -12,7 +12,7 @@
 
 	let activeTab = $state('details');
 
-	let wikiName: string = page.params.wiki_name;
+	let wikiName: string = page.params.wiki_name.replaceAll('_', ' ');
 	let language: string = 'en';
 
 	let isUsingBionicReading: boolean = $state(false);
@@ -33,7 +33,7 @@
 			infoBoxImage = res.data.images[Object.keys(res.data.images)[0]];
 			const firstKey = Object.keys(res.data.infobox)[0];
 			let firstObject = res.data.infobox[firstKey];
-			if (Object.keys(res.data.infobox).filter((key) => !key.toLowerCase().includes("image")).length > 1) {
+			if (Object.keys(res.data.infobox).filter((key) => !key.toLowerCase().includes("image")).length != 1) {
 				firstObject = res.data.infobox;
 			}
 			console.log(firstObject, res.data);

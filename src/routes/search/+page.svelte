@@ -25,7 +25,7 @@
 
 		try {
 			const res = await fetch(
-				`http://9.141.41.77:8080/search?q=${encodeURIComponent(query)}&lang=en`,
+				`https://wikiless.serveo.net/search?q=${encodeURIComponent(query)}`,
 				{
 					headers: {
 						Accept: 'application/json',
@@ -50,7 +50,7 @@
 
 <div class="flex h-full w-full">
 	<div class="bg-base-100 flex h-screen w-full flex-col items-center justify-center">
-		<h1 class="p-4 text-3xl font-bold">WikiChat</h1>
+		<h1 class="p-4 text-3xl font-bold">WikiLess</h1>
 
 		<label class="input flex w-full max-w-xl items-center gap-2">
 			<svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">

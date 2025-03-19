@@ -33,7 +33,7 @@
 			infoBoxImage = res.data.images[Object.keys(res.data.images)[0]];
 			const firstKey = Object.keys(res.data.infobox)[0];
 			let firstObject = res.data.infobox[firstKey];
-			if (Object.keys(res.data.infobox).length > 4) {
+			if (Object.keys(res.data.infobox).filter((key) => !key.toLowerCase().includes("image")).length > 1) {
 				firstObject = res.data.infobox;
 			}
 			console.log(firstObject, res.data);
@@ -42,7 +42,7 @@
 			Object.keys(firstObject).forEach((value) => {
 				if (firstObject[value] && value !== 'imageGallery') {
 					const currentValue = firstObject[value];
-					markedDown += `\n**${value}**: `;
+					markedDown += `\n**${cleanUpAndTitle(value)}**: `;
 
 					if (
 						typeof currentValue === 'string' &&
@@ -132,11 +132,14 @@
 	}
 </script>
 
+<svelte:head>
+	<title>{wikiName}</title>
+</svelte:head>
+
 <div class="flex w-full flex-row justify-between">
 	<h1 class="py-6 text-3xl font-semibold">{wikiName}</h1>
 	<div class="flex flex-row gap-2 text-sm">
 		<span class="font-semibold">Bionic Reading</span>
-		<!-- svelte-ignore a11y_label_has_associated_control -->
 		<input
 			type="checkbox"
 			onchange={() => (isUsingBionicReading = !isUsingBionicReading)}

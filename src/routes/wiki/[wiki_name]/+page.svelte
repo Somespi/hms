@@ -25,7 +25,7 @@
 
 	async function getInfoBox() {
 		try {
-			const res = await axios.post(`https://wikiless.serveo.net/infobox`, {
+			const res = await axios.post(`https://became-geometry-operating-berry.trycloudflare.com/infobox`, {
 				lang: language,
 				wiki: wikiName
 			});
@@ -76,7 +76,7 @@
 
 	async function getWikiSummary() {
 		try {
-			const res = await axios.post('https://wikiless.serveo.net/summary', {
+			const res = await axios.post('https://became-geometry-operating-berry.trycloudflare.com/summary', {
 				lang: language,
 				wiki: wikiName
 			});
@@ -89,7 +89,7 @@
 
 	async function getWikiBody() {
 		try {
-			const res = await axios.get(`https://wikiless.serveo.net/wiki/${language}/${wikiName}`);
+			const res = await axios.get(`https://became-geometry-operating-berry.trycloudflare.com/wiki/${language}/${wikiName}`);
 			wikiBody = [res.data.summary, res.data.bionic_summary.replaceAll('__', '**')];
 			wikiSections = res.data.sections;
 			//console.log(wikiSections);

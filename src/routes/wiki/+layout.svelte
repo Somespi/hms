@@ -5,6 +5,7 @@
 	import axios from 'axios';
 	import { page } from '$app/stores';
 	import { get } from 'svelte/store';
+	import { marked } from 'marked';
 	let { children } = $props();
 
 	let selectedPersepictive: string | null = $state('Unbiased');
@@ -164,7 +165,7 @@
 							<div class="chat-header">
 								{selectedPersepictive} Bot
 							</div>
-							<div class="chat-bubble chat-bubble-neutral text-sm">{message.content}</div>
+							<div class="chat-bubble chat-bubble-neutral text-sm">{@html marked(message.content)}</div>
 						</div>
 					{/if}
 				{/each}

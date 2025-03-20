@@ -24,7 +24,7 @@
 	let wikiBody: string[] = $state([]);
 	let wikiSections: any = $state({});
 	let infoBoxImage: string = $state('');
-	let infoBoxContent: string = $state('');
+	let infoBoxContent: string = $state('Generating...');
 
 	const isImageAvailable = async (url: string) => {
 		console.log(url);
@@ -93,6 +93,19 @@
 		}
 	}
 
+	async function getWikiSectionSummary(sectionName: string) {
+		try {
+			const res = await axios.post('https://12495f02b94ee0.lhr.life/summary', {
+				lang: language,
+				section: sectionName,
+				wiki: wikiName
+			});
+			return res.data.message;
+		} catch (error) {
+			console.error('Error fetching summary:', error);
+		}
+	}
+
 	async function getWikiSummary() {
 		try {
 			const res = await axios.post('https://12495f02b94ee0.lhr.life/summary', {
@@ -111,6 +124,10 @@
 			const res = await axios.get(`https://12495f02b94ee0.lhr.life/wiki/${language}/${wikiName}`);
 			wikiBody = [res.data.summary, res.data.bionic_summary.replaceAll('__', '**')];
 			wikiSections = res.data.sections;
+			for (let section of Object.keys(wikiSections)) {
+				wikiSections[section].summary = await getWikiSectionSummary(section);
+				console.log(wikiSections[section].summary);
+			}
 			//console.log(wikiSections);
 		} catch (error) {
 			console.error('Error fetching wiki body:', error);
@@ -204,6 +221,14 @@
 			{#each Object.keys(wikiSections) as section}
 				<details open>
 					<summary class="text-2xl font-bold" dir="auto">{section}</summary>
+
+					<div class="card bg-base-100 my-5 w-full border">
+						<div class="card-body">
+							<p class="opacity-80" dir="auto">
+								{@html marked(wikiSections[section]?.summary ?? 'Generating...')}
+							</p>
+						</div>
+					</div>
 
 					<p dir="auto">
 						{@html marked(

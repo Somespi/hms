@@ -27,7 +27,7 @@
 
 		try {
 			const res = await fetch(
-				`https://12495f02b94ee0.lhr.life/search?q=${encodeURIComponent(query)}`,
+				`https://wikiapi.abdlmutii.me/search?q=${encodeURIComponent(query)}`,
 				{
 					headers: {
 						Accept: 'application/json',

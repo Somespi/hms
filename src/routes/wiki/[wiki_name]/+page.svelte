@@ -35,7 +35,7 @@
 
 	async function getInfoBox() {
 		try {
-			const res = await axios.post(`https://12495f02b94ee0.lhr.life/infobox`, {
+			const res = await axios.post(`https://wikiapi.abdlmutii.me/infobox`, {
 				lang: language,
 				wiki: wikiName
 			});
@@ -95,7 +95,7 @@
 
 	async function getWikiSectionSummary(sectionName: string) {
 		try {
-			const res = await axios.post('https://12495f02b94ee0.lhr.life/summary', {
+			const res = await axios.post('https://wikiapi.abdlmutii.me/summary', {
 				lang: language,
 				section: sectionName,
 				wiki: wikiName
@@ -108,7 +108,7 @@
 
 	async function getWikiSummary() {
 		try {
-			const res = await axios.post('https://12495f02b94ee0.lhr.life/summary', {
+			const res = await axios.post('https://wikiapi.abdlmutii.me/summary', {
 				lang: language,
 				wiki: wikiName
 			});
@@ -121,7 +121,7 @@
 
 	async function getWikiBody() {
 		try {
-			const res = await axios.get(`https://12495f02b94ee0.lhr.life/wiki/${language}/${wikiName}`);
+			const res = await axios.get(`https://wikiapi.abdlmutii.me/wiki/${language}/${wikiName}`);
 			wikiBody = [res.data.summary, res.data.bionic_summary.replaceAll('__', '**')];
 			wikiSections = res.data.sections;
 			for (let section of Object.keys(wikiSections)) {

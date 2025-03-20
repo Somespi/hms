@@ -71,7 +71,7 @@
 	const askChatbot = (message: string) => {
 		// add thinking message to chat history until we get a response
 		axios
-			.post('https://12495f02b94ee0.lhr.life/chat', {
+			.post('https://wikiapi.abdlmutii.me/chat', {
 				lang: wikiLanguage,
 				message: message,
 				model: selectedPersepictive,
@@ -92,7 +92,7 @@
 	};
 
 	const getChatHistory = async () => {
-		const response = await axios.get(`https://12495f02b94ee0.lhr.life/messages/${chatId}`);
+		const response = await axios.get(`https://wikiapi.abdlmutii.me/messages/${chatId}`);
 		chatHistory = response.data.messages.map((message: any) => {
 			return {
 				role: message.role === 'User' ? 'user' : 'ai',
@@ -103,7 +103,7 @@
 
 	const getPromptSuggestions = async () => {
 		try {
-			const response = await axios.post('https://12495f02b94ee0.lhr.life/prompts', {
+			const response = await axios.post('https://wikiapi.abdlmutii.me/prompts', {
 				lang: wikiLanguage,
 				wiki: wikiName
 			});

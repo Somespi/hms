@@ -119,8 +119,8 @@
 	});
 
 	function cleanUpAndTitle(string: string) {
-		let text = string.replaceAll('_', ' ');
-		text = text.replaceAll('-', ' ');
+		let text = string?.replaceAll('_', ' ');
+		text = text?.replaceAll('-', ' ');
 		if (new RegExp(`(A-Z)`).test(text)) {
 			const index = text.search(new RegExp(`(A-Z)`));
 			if (index > 0 && index < text.length - 1) {

@@ -3,6 +3,8 @@
 	import { onMount } from 'svelte';
 	import { Send } from 'lucide-svelte';
 	import axios from 'axios';
+	import { page } from '$app/stores';
+	import { get } from 'svelte/store';
 	let { children } = $props();
 
 	let selectedPersepictive: string | null = $state('Unbiased');
@@ -13,13 +15,15 @@
 	let isResizing: boolean = $state(false);
 	let sidebar;
 
-	const wikiLanguage = 'en';
-	let wikiName = 'Egypt';
+	let wikiName: string;
+	let wikiLanguage: string;
 
 	let chatHistory: {
 		role: string;
 		content: string;
 	}[] = $state([]);
+
+	let prompts: string[] = $state([]);
 
 	const handleMouseDown = () => {
 		isResizing = true;
@@ -50,8 +54,9 @@
 	};
 
 	const askChatbot = (message: string) => {
+		// add thinking message to chat history until we get a response
 		axios
-			.post('http://9.141.41.77:8080/chat', {
+			.post('https://wikiless.serveo.net/chat', {
 				lang: wikiLanguage,
 				message: message,
 				model: selectedPersepictive,
@@ -60,18 +65,64 @@
 			})
 			.then((res) => {
 				console.log(res);
+				// remove thinking message and add response
+				chatHistory = chatHistory.filter((msg) => msg.content !== 'Thinking...');
 				chatHistory = [...chatHistory, { role: 'ai', content: res.data.message }];
 			});
-		chatHistory = [...chatHistory, { role: 'user', content: message }];
+		chatHistory = [
+			...chatHistory,
+			{ role: 'user', content: message },
+			{ role: 'ai', content: 'Thinking...' }
+		];
 		messageInput.value = '';
+	};
+
+	const getPromptSuggestions = () => {
+		return axios
+			.post('https://wikiless.serveo.net/prompts', {
+				lang: wikiLanguage,
+				wiki: wikiName
+			})
+			.then((response) => {
+				console.log(response);
+				return response.data;
+			})
+			.catch((error) => {
+				console.error(error);
+			});
 	};
 
 	onMount(() => {
 		document.addEventListener('mousemove', handleMouseMove);
 		document.addEventListener('mouseup', handleMouseUp);
 		document.getElementById('chat-history')!.style.height =
-		document.getElementById('chat-history')!.clientHeight + 'px';
+			document.getElementById('chat-history')!.clientHeight + 'px';
 		document.getElementById('chat-history')!.classList.remove('flex-1');
+
+		const url = new URL(get(page).url);
+
+		// Extract the wiki name from the pathname
+		const pathSegments = url.pathname.split('/');
+		wikiName =
+			pathSegments.length > 2
+				? decodeURIComponent(pathSegments[2]).replaceAll('_', ' ')
+				: 'Unknown Wiki';
+
+		// Extract the language from query parameters
+		const params = new URLSearchParams(url.search);
+		wikiLanguage = params.get('lang') || 'en';
+
+		getPromptSuggestions().then((data: { questions: string[] }) => {
+			function findLastQuestions(obj: any): string[] {
+				while (obj?.questions) obj = obj.questions;
+				return Array.isArray(obj) && obj.length >= 3 ? obj.slice(0, 3) : [];
+			}
+
+			if (data.questions) {
+				prompts = findLastQuestions(data);
+			}
+			return prompts;
+		});
 	});
 </script>
 
@@ -118,6 +169,19 @@
 					{/if}
 				{/each}
 			</div>
+
+			{#if prompts.length > 0}
+				<div class="flex flex-row gap-2">
+					{#each prompts as prompt}
+						<button
+							class="btn btn-ghost btn-xs border-input border border-gray-700"
+							onclick={() => askChatbot(prompt)}
+						>
+							{prompt}
+						</button>
+					{/each}
+				</div>
+			{/if}
 
 			<div class="border-t p-4">
 				<div class="flex items-center gap-2">

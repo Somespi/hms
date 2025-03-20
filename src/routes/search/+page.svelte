@@ -25,7 +25,7 @@
 
 		try {
 			const res = await fetch(
-				`https://wikiless.serveo.net/search?q=${encodeURIComponent(query)}`,
+				`https://became-geometry-operating-berry.trycloudflare.com/search?q=${encodeURIComponent(query)}`,
 				{
 					headers: {
 						Accept: 'application/json',

@@ -27,7 +27,7 @@
 
 		try {
 			const res = await fetch(
-				`https://5bf067c778865d.lhr.life/search?q=${encodeURIComponent(query)}`,
+				`https://12495f02b94ee0.lhr.life/search?q=${encodeURIComponent(query)}`,
 				{
 					headers: {
 						Accept: 'application/json',

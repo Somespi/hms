@@ -16,7 +16,7 @@
 	let isResizing: boolean = $state(false);
 	let sidebar;
 
-	let wikiName: string;
+	const wikiName: string = page.params.wiki_name;
 	let wikiLanguage: string;
 
 	let chatHistory: {
@@ -60,7 +60,7 @@
 	const askChatbot = (message: string) => {
 		// add thinking message to chat history until we get a response
 		axios
-			.post('https://5bf067c778865d.lhr.life/chat', {
+			.post('https://12495f02b94ee0.lhr.life/chat', {
 				lang: wikiLanguage,
 				message: message,
 				model: selectedPersepictive,
@@ -69,9 +69,8 @@
 			})
 			.then((res) => {
 				console.log(res);
-				// remove thinking message and add response
-				chatHistory = chatHistory.filter((msg) => msg.content !== 'Thinking...');
-				chatHistory = [...chatHistory, { role: 'ai', content: res.data.message }];
+				chatHistory[chatHistory.length - 1].content = res.data.message;
+				chatHistory = [...chatHistory];
 			});
 		chatHistory = [
 			...chatHistory,
@@ -84,7 +83,7 @@
 	const getPromptSuggestions = async () => {
 		try {
 			const response = await axios
-				.post('https://5bf067c778865d.lhr.life/prompts', {
+				.post('https://12495f02b94ee0.lhr.life/prompts', {
 					lang: wikiLanguage,
 					wiki: wikiName
 				});
@@ -95,30 +94,30 @@
 		}
 	};
 
-	onMount(() => {
+	onMount(async () => {
 		document.addEventListener('mousemove', handleMouseMove);
 		document.addEventListener('mouseup', handleMouseUp);
 		document.getElementById('chat-history')!.style.height =
-			document.getElementById('chat-history')!.clientHeight + 'px';
+		document.getElementById('chat-history')!.clientHeight + 'px';
 		document.getElementById('chat-history')!.classList.remove('flex-1');
 
-		const url = new URL(page.url);
 
-		wikiName = page.params.wiki_name;
-		const params = new URLSearchParams(url.search);
-		wikiLanguage = params.get('lang') || 'en';
+		const urlParams = new URLSearchParams(window.location.search);
+		wikiLanguage = urlParams.get('lang') || 'en';
 
-		getPromptSuggestions().then((data: { questions: string[] }) => {
-			function findLastQuestions(obj: any): string[] {
-				while (obj?.questions) obj = obj.questions;
-				return Array.isArray(obj) && obj.length >= 3 ? obj.slice(0, 3) : [];
-			}
+		let data = await getPromptSuggestions();
 
-			if (data.questions) {
+		console.log(data);
+
+		function findLastQuestions(obj: any): string[] {
+			if (!obj) return [];
+			while (obj?.questions) obj = obj.questions;
+			return Array.isArray(obj) && obj.length >= 3 ? obj.slice(0, 3) : [];
+		}
+
+		if (data && data.questions) {
 				prompts = findLastQuestions(data);
-			}
-			return prompts;
-		});
+		}
 	});
 </script>
 
@@ -148,7 +147,7 @@
 		</div>
 
 		<div class="flex flex-1 flex-col space-y-2 p-4">
-			<div id="chat-history" class="flex-1 overflow-y-auto">
+			<div id="chat-history" class="flex-1 overflow-y-auto ">
 				{#each chatHistory as message}
 					{#if message.role === 'user'}
 						<div class="chat chat-start">
@@ -167,7 +166,7 @@
 			</div>
 
 			{#if prompts.length > 0 && chatHistory.length === 0}
-				<div class="flex flex-row gap-2">
+				<div class="flex flex-row gap-2 overflow-x-auto no-scrollbar">
 					{#each prompts as prompt}
 						<button
 							class="btn btn-ghost btn-xs border-input border border-gray-700"

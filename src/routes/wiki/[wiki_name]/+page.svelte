@@ -41,9 +41,9 @@
 			});
 			console.log(res.data);
 			let imageIndex = 0;
-			while (!await isImageAvailable(res.data.images[Object.keys(res.data.images)[imageIndex]]) && imageIndex < res.data.images.length) {
-				imageIndex++;
-			}
+			// while (!await isImageAvailable(res.data.images[Object.keys(res.data.images)[imageIndex]]) && imageIndex < res.data.images.length) {
+			// 	imageIndex++;
+			// }
 			infoBoxImage = res.data.images[Object.keys(res.data.images)[imageIndex]];
 			const firstKey = Object.keys(res.data.infobox)[0];
 			let firstObject = res.data.infobox[firstKey];
@@ -67,7 +67,7 @@
 							currentValue
 						)
 					) {
-						if (!isImageAvailable(currentValue)) return;
+						//if (!isImageAvailable(currentValue)) return;
 						markedDown += ` ![${value}](${currentValue})\n `;
 					} else if (Array.isArray(currentValue)) {
 						markedDown += '\n';

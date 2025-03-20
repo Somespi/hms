@@ -128,9 +128,9 @@
 
 		getChatId().then((id) => {
 			chatId = id;
+			getChatHistory();
 		});
 
-		getChatHistory();
 
 		console.log(data);
 

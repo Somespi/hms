@@ -1,8 +1,11 @@
 <script lang="ts">
-	import { page } from '$app/state';
 	import TabButton from '$lib/TabButton.svelte';
-	import axios, { AxiosError } from 'axios';
+	import History from '$lib/History.svelte';
+
+	import { page } from '$app/state';
 	import { onMount } from 'svelte';
+
+	import axios from 'axios';
 	import { marked } from 'marked';
 
 	const tabs = [
@@ -13,7 +16,7 @@
 	let activeTab = $state('details');
 
 	let wikiName: string = page.params.wiki_name.replaceAll('_', ' ');
-	let language: string = 'en';
+	let language: string = $state('en');
 
 	let isUsingBionicReading: boolean = $state(false);
 
@@ -23,17 +26,31 @@
 	let infoBoxImage: string = $state('');
 	let infoBoxContent: string = $state('');
 
+	const isImageAvailable = async (url: string) => {
+		console.log(url);
+		const img_request = await fetch(url);
+		console.log(img_request);
+		return img_request.status === 200 && img_request.headers.get('content-type')?.startsWith('image/');
+	}
+
 	async function getInfoBox() {
 		try {
-			const res = await axios.post(`https://became-geometry-operating-berry.trycloudflare.com/infobox`, {
+			const res = await axios.post(`https://5bf067c778865d.lhr.life/infobox`, {
 				lang: language,
 				wiki: wikiName
 			});
 			console.log(res.data);
-			infoBoxImage = res.data.images[Object.keys(res.data.images)[0]];
+			let imageIndex = 0;
+			while (!await isImageAvailable(res.data.images[Object.keys(res.data.images)[imageIndex]]) && imageIndex < res.data.images.length) {
+				imageIndex++;
+			}
+			infoBoxImage = res.data.images[Object.keys(res.data.images)[imageIndex]];
 			const firstKey = Object.keys(res.data.infobox)[0];
 			let firstObject = res.data.infobox[firstKey];
-			if (Object.keys(res.data.infobox).filter((key) => !key.toLowerCase().includes("image")).length != 1) {
+			if (
+				Object.keys(res.data.infobox).filter((key) => !key.toLowerCase().includes('image'))
+					.length != 1
+			) {
 				firstObject = res.data.infobox;
 			}
 			console.log(firstObject, res.data);
@@ -46,10 +63,12 @@
 
 					if (
 						typeof currentValue === 'string' &&
-						new RegExp(`(jpg|jpeg|png|gif|bmp|webp|svg)`).test(currentValue)
+						new RegExp(`(jpg|jpeg|png|gif|bmp|webp|svg|JPG|JPEG|PNG|GIF|BMP|WEBP|SVG)`).test(
+							currentValue
+						)
 					) {
+						if (!isImageAvailable(currentValue)) return;
 						markedDown += ` ![${value}](${currentValue})\n `;
-						console.warn(markedDown);
 					} else if (Array.isArray(currentValue)) {
 						markedDown += '\n';
 						markedDown +=
@@ -76,7 +95,7 @@
 
 	async function getWikiSummary() {
 		try {
-			const res = await axios.post('https://became-geometry-operating-berry.trycloudflare.com/summary', {
+			const res = await axios.post('https://5bf067c778865d.lhr.life/summary', {
 				lang: language,
 				wiki: wikiName
 			});
@@ -89,7 +108,7 @@
 
 	async function getWikiBody() {
 		try {
-			const res = await axios.get(`https://became-geometry-operating-berry.trycloudflare.com/wiki/${language}/${wikiName}`);
+			const res = await axios.get(`https://5bf067c778865d.lhr.life/wiki/${language}/${wikiName}`);
 			wikiBody = [res.data.summary, res.data.bionic_summary.replaceAll('__', '**')];
 			wikiSections = res.data.sections;
 			//console.log(wikiSections);
@@ -119,8 +138,9 @@
 	});
 
 	function cleanUpAndTitle(string: string) {
-		let text = string?.replaceAll('_', ' ');
-		text = text?.replaceAll('-', ' ');
+		if (!string || typeof string !== 'string') return '';
+		let text = string.replaceAll('_', ' ');
+		text = text.replaceAll('-', ' ');
 		if (new RegExp(`(A-Z)`).test(text)) {
 			const index = text.search(new RegExp(`(A-Z)`));
 			if (index > 0 && index < text.length - 1) {
@@ -148,19 +168,17 @@
 		/>
 	</div>
 </div>
-<div class="inline-block w-auto">
+<!-- <div class="inline-block w-auto">
 	<div class="bg-base-300 flex space-x-1 rounded-md p-1">
 		<TabButton name="details" label="Details" onClick={setActiveTab} bind:activeTab />
 		<TabButton name="history" label="History" onClick={setActiveTab} bind:activeTab />
 	</div>
-</div>
-{#if activeTab === 'history'}
-	<h1>History</h1>
-{:else}
+</div> -->
+{#if activeTab !== 'history'}
 	<div class="card bg-base-100 my-10 w-full border">
 		<div class="card-body">
-			<p class="opacity-80">
-				{summary}
+			<p class="opacity-80" dir="auto">
+				{@html marked(summary)}
 			</p>
 		</div>
 	</div>
@@ -173,7 +191,7 @@
 				</figure>
 				<div class="card-body items-center text-center">
 					<h2 class="card-title">{wikiName}</h2>
-					<ul class="text-left opacity-95">
+					<ul class="text-left opacity-95" dir="auto">
 						{@html marked(infoBoxContent)}
 					</ul>
 				</div>
@@ -185,9 +203,9 @@
 			<br /><br /><br />
 			{#each Object.keys(wikiSections) as section}
 				<details open>
-					<summary class="text-2xl font-bold">{section}</summary>
+					<summary class="text-2xl font-bold" dir="auto">{section}</summary>
 
-					<p>
+					<p dir="auto">
 						{@html marked(
 							(isUsingBionicReading
 								? (wikiSections[section]?.body_bionic.replaceAll('__', '**') ?? '')
@@ -267,4 +285,6 @@
 			display: block;
 		}
 	</style>
+{:else}
+	<!--History wikiName language -->
 {/if}

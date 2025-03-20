@@ -3,7 +3,7 @@
 	import { onMount } from 'svelte';
 	import { Send } from 'lucide-svelte';
 	import axios from 'axios';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { get } from 'svelte/store';
 	import { marked } from 'marked';
 	let { children } = $props();
@@ -50,6 +50,9 @@
 		console.log(event.movementX, sidebar!.style.width);
 	};
 
+
+	
+
 	const handleMouseUp = () => {
 		isResizing = false;
 	};
@@ -57,7 +60,7 @@
 	const askChatbot = (message: string) => {
 		// add thinking message to chat history until we get a response
 		axios
-			.post('https://wikiless.serveo.net/chat', {
+			.post('https://5bf067c778865d.lhr.life/chat', {
 				lang: wikiLanguage,
 				message: message,
 				model: selectedPersepictive,
@@ -78,19 +81,18 @@
 		messageInput.value = '';
 	};
 
-	const getPromptSuggestions = () => {
-		return axios
-			.post('https://wikiless.serveo.net/prompts', {
-				lang: wikiLanguage,
-				wiki: wikiName
-			})
-			.then((response) => {
-				console.log(response);
-				return response.data;
-			})
-			.catch((error) => {
-				console.error(error);
-			});
+	const getPromptSuggestions = async () => {
+		try {
+			const response = await axios
+				.post('https://5bf067c778865d.lhr.life/prompts', {
+					lang: wikiLanguage,
+					wiki: wikiName
+				});
+			console.log(response);
+			return response.data;
+		} catch (error) {
+			console.error(error);
+		}
 	};
 
 	onMount(() => {
@@ -100,16 +102,9 @@
 			document.getElementById('chat-history')!.clientHeight + 'px';
 		document.getElementById('chat-history')!.classList.remove('flex-1');
 
-		const url = new URL(get(page).url);
+		const url = new URL(page.url);
 
-		// Extract the wiki name from the pathname
-		const pathSegments = url.pathname.split('/');
-		wikiName =
-			pathSegments.length > 2
-				? decodeURIComponent(pathSegments[2]).replaceAll('_', ' ')
-				: 'Unknown Wiki';
-
-		// Extract the language from query parameters
+		wikiName = page.params.wiki_name;
 		const params = new URLSearchParams(url.search);
 		wikiLanguage = params.get('lang') || 'en';
 
@@ -171,7 +166,7 @@
 				{/each}
 			</div>
 
-			{#if prompts.length > 0}
+			{#if prompts.length > 0 && chatHistory.length === 0}
 				<div class="flex flex-row gap-2">
 					{#each prompts as prompt}
 						<button

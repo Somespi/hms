@@ -1,7 +1,9 @@
 <script lang='ts'>
 	import { onMount } from 'svelte';
 	let query = '';
-	let results: { title: string; url: string; summary: string }[] = [];
+	let results: {
+		lang: any; title: string; url: string; summary: string 
+}[] = [];
 	let loading = false;
 	let error = '';
 	let timeout: string | number | NodeJS.Timeout | null | undefined = null; // Store timeout ID
@@ -25,7 +27,7 @@
 
 		try {
 			const res = await fetch(
-				`https://became-geometry-operating-berry.trycloudflare.com/search?q=${encodeURIComponent(query)}`,
+				`https://5bf067c778865d.lhr.life/search?q=${encodeURIComponent(query)}`,
 				{
 					headers: {
 						Accept: 'application/json',
@@ -50,7 +52,11 @@
 
 <div class="flex h-full w-full">
 	<div class="bg-base-100 flex h-screen w-full flex-col items-center justify-center">
-		<h1 class="p-4 text-3xl font-bold">WikiLess</h1>
+		<div class="flex h-24 items-center justify-start px-4 content-center mb-2">
+
+			<img src="/favicon.svg" alt="WikiLess" class="h-12">
+			<h1 class="p-4 text-4xl font-black">Wikiless</h1>
+		</div>
 
 		<label class="input flex w-full max-w-xl items-center gap-2">
 			<svg class="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -88,7 +94,7 @@
 		{#if results.length > 0}
 			<div class="mt-1 w-full max-w-xl rounded-lg bg-gray-700 shadow-md flex flex-col gap-2">
 				{#each results as result}
-					<a class="border-b border-gray-600 p-4 last:border-none" href="/wiki/{result.title}?lang=en">
+					<a class="border-b border-gray-600 p-4 last:border-none" href="/wiki/{result.title}?lang={result.lang}">
 						<h2 class="text-lg font-bold text-white">{result.title}</h2>
 						<p class="text-sm text-gray-400">{result.summary.slice(0, 100)}...
 

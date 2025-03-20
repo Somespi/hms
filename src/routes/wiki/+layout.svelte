@@ -24,6 +24,8 @@
 		content: string;
 	}[] = $state([]);
 
+	let chatId: string = $state('');
+
 	let prompts: string[] = $state([]);
 
 	const handleMouseDown = () => {
@@ -50,11 +52,20 @@
 		console.log(event.movementX, sidebar!.style.width);
 	};
 
-
-	
-
 	const handleMouseUp = () => {
 		isResizing = false;
+	};
+
+	const getChatId = async () => {
+		// check local storage for chat id for this wiki name
+		const chatId = localStorage.getItem(`chatId-${wikiName}-${wikiLanguage}`);
+		if (chatId) {
+			return chatId;
+		} else {
+			const id = crypto.randomUUID();
+			localStorage.setItem(`chatId-${wikiName}-${wikiLanguage}`, id);
+			return id;
+		}
 	};
 
 	const askChatbot = (message: string) => {
@@ -64,7 +75,7 @@
 				lang: wikiLanguage,
 				message: message,
 				model: selectedPersepictive,
-				uuid: '123e4567-e89b-12d3-a456-426614174000',
+				uuid: chatId,
 				wiki: wikiName
 			})
 			.then((res) => {
@@ -80,13 +91,22 @@
 		messageInput.value = '';
 	};
 
+	const getChatHistory = async () => {
+		const response = await axios.get(`https://12495f02b94ee0.lhr.life/messages/${chatId}`);
+		chatHistory = response.data.messages.map((message: any) => {
+			return {
+				role: message.role === 'User' ? 'user' : 'ai',
+				content: message.content
+			};
+		});
+	};
+
 	const getPromptSuggestions = async () => {
 		try {
-			const response = await axios
-				.post('https://12495f02b94ee0.lhr.life/prompts', {
-					lang: wikiLanguage,
-					wiki: wikiName
-				});
+			const response = await axios.post('https://12495f02b94ee0.lhr.life/prompts', {
+				lang: wikiLanguage,
+				wiki: wikiName
+			});
 			console.log(response);
 			return response.data;
 		} catch (error) {
@@ -98,14 +118,19 @@
 		document.addEventListener('mousemove', handleMouseMove);
 		document.addEventListener('mouseup', handleMouseUp);
 		document.getElementById('chat-history')!.style.height =
-		document.getElementById('chat-history')!.clientHeight + 'px';
+			document.getElementById('chat-history')!.clientHeight + 'px';
 		document.getElementById('chat-history')!.classList.remove('flex-1');
-
 
 		const urlParams = new URLSearchParams(window.location.search);
 		wikiLanguage = urlParams.get('lang') || 'en';
 
 		let data = await getPromptSuggestions();
+
+		getChatId().then((id) => {
+			chatId = id;
+		});
+
+		getChatHistory();
 
 		console.log(data);
 
@@ -116,7 +141,7 @@
 		}
 
 		if (data && data.questions) {
-				prompts = findLastQuestions(data);
+			prompts = findLastQuestions(data);
 		}
 	});
 </script>
@@ -147,7 +172,7 @@
 		</div>
 
 		<div class="flex flex-1 flex-col space-y-2 p-4">
-			<div id="chat-history" class="flex-1 overflow-y-auto ">
+			<div id="chat-history" class="flex-1 overflow-y-auto">
 				{#each chatHistory as message}
 					{#if message.role === 'user'}
 						<div class="chat chat-start">
@@ -159,14 +184,16 @@
 							<div class="chat-header">
 								{selectedPersepictive} Bot
 							</div>
-							<div class="chat-bubble chat-bubble-neutral text-sm">{@html marked(message.content)}</div>
+							<div class="chat-bubble chat-bubble-neutral text-sm">
+								{@html marked(message.content)}
+							</div>
 						</div>
 					{/if}
 				{/each}
 			</div>
 
 			{#if prompts.length > 0 && chatHistory.length === 0}
-				<div class="flex flex-row gap-2 overflow-x-auto no-scrollbar">
+				<div class="no-scrollbar flex flex-row gap-2 overflow-x-auto">
 					{#each prompts as prompt}
 						<button
 							class="btn btn-ghost btn-xs border-input border border-gray-700"
